@@ -10,15 +10,18 @@ import (
 var (
 	crbList = []string{"ClusterRoleBinding/alameda-datahubCRB.yaml",
 		"ClusterRoleBinding/alameda-operatorCRB.yaml",
+		"ClusterRoleBinding/alameda-weavescopeCRB.yaml",
 	}
 	crList = []string{"ClusterRole/alameda-datahubCR.yaml",
 		"ClusterRole/alameda-operatorCR.yaml",
 		"ClusterRole/aggregate-alameda-admin-edit-alamedaCR.yaml",
+		"ClusterRole/alameda-weavescopeCR.yaml",
 	}
 
 	saList = []string{"ServiceAccount/alameda-datahubSA.yaml",
 		"ServiceAccount/alameda-operatorSA.yaml",
 		"ServiceAccount/alameda-aiSA.yaml",
+		"ServiceAccount/alameda-weavescopeSA.yaml",
 	}
 	crdList = []string{
 		"CustomResourceDefinition/alamedarecommendationsCRD.yaml",
@@ -29,13 +32,17 @@ var (
 
 	svList = []string{"Service/alameda-datahubSV.yaml",
 		"Service/alameda-influxdbSV.yaml",
-		"Service/alameda-ai-metricsSV.yaml"}
+		"Service/alameda-ai-metricsSV.yaml",
+		"Service/alameda-weavescopeSV.yaml"
+	}
 
 	depList = []string{"Deployment/alameda-datahubDM.yaml",
 		"Deployment/alameda-operatorDM.yaml",
 		"Deployment/alameda-influxdbDM.yaml",
 		"Deployment/alameda-aiDM.yaml",
 		"Deployment/alameda-recommenderDM.yaml",
+		"Deployment/alameda-weavescope-probeDM.yaml",
+		"Deployment/alameda-weavescopeDM.yaml",
 	}
 
 	guiList = []string{
@@ -81,6 +88,14 @@ var (
 		"PersistentVolumeClaim/alameda-evictioner-data.yaml",
 		"PersistentVolumeClaim/admission-controller-data.yaml",
 	}
+
+	dsList = []string{
+		"DaemonSet/alamdea-weavescopeDS.yaml",
+	}
+
+	pspList = []string{
+		"PodSecurityPolicy/alameda-weavescopePSP.yaml",
+	}
 )
 
 type AlamedaServiceParamter struct {
@@ -100,6 +115,7 @@ type AlamedaServiceParamter struct {
 	AdmissionControllerSectionSet v1alpha1.AlamedaComponentSpec
 	AlamedaRecommenderSectionSet  v1alpha1.AlamedaComponentSpec
 	AlamedaExecutorSectionSet     v1alpha1.AlamedaComponentSpec
+	AlamedaWeaveScopeSectionSet   v1alpha1.AlamedaComponentSpec
 	CurrentCRDVersion             v1alpha1.AlamedaServiceStatusCRDVersion
 	previousCRDVersion            v1alpha1.AlamedaServiceStatusCRDVersion
 }
@@ -115,6 +131,8 @@ type Resource struct {
 	SecretList                   []string
 	PersistentVolumeClaimList    []string
 	AlamdaScalerList             []string
+	DaemonSetList                []string
+	PodSecurityPolicySetList     []string
 }
 
 func GetSelfDrivingRsource() *Resource {
@@ -133,6 +151,8 @@ func GetExcutionResource() *Resource {
 	var excDep = make([]string, 0)
 	var excCM = make([]string, 0)
 	var excSV = make([]string, 0)
+	var excDS = make([]string, 0)
+	var excPSP = make([]string, 0)
 	for _, str := range excutionList {
 		if len(strings.Split(str, "/")) > 0 {
 			switch resource := strings.Split(str, "/")[0]; resource {
@@ -148,8 +168,10 @@ func GetExcutionResource() *Resource {
 				excCM = append(excCM, str)
 			case "Service":
 				excSV = append(excSV, str)
-			case "Deployment":
-				excDep = append(excDep, str)
+			case "DaemonSet":
+				excDS = append(excDS, str)
+			case "PodSecurityPolicy":
+				excPSP = append(excPSP, str)
 			default:
 			}
 		}
@@ -162,6 +184,8 @@ func GetExcutionResource() *Resource {
 		ConfigMapList:          excCM,
 		ServiceList:            excSV,
 		DeploymentList:         excDep,
+		DaemonSetList:          excDS,
+		PodSecurityPolicyList:  excPSP,
 	}
 }
 
@@ -294,6 +318,8 @@ func GetUnInstallResource() *Resource {
 		ServiceList:                  svList,
 		DeploymentList:               depList,
 		SecretList:                   secretList,
+		DaemonSetList:                dsList,
+		PodSecurityPolicySetList:     pspList,
 	}
 }
 
@@ -412,6 +438,8 @@ func (asp *AlamedaServiceParamter) GetInstallResource() *Resource {
 	sv := svList
 	dep := depList
 	secrets := secretList
+	ds := dsList
+	psp := pspList
 	pvc := []string{}
 	alamdaScalerList := []string{}
 	if asp.SelfDriving {
@@ -430,18 +458,26 @@ func (asp *AlamedaServiceParamter) GetInstallResource() *Resource {
 		crb = append(crb, "ClusterRoleBinding/alameda-evictionerCRB.yaml")
 		crb = append(crb, "ClusterRoleBinding/admission-controllerCRB.yaml")
 		crb = append(crb, "ClusterRoleBinding/alameda-executorCRB.yaml")
+		crb = append(crb, "ClusterRoleBinding/alameda-weavescopeCRB.yaml")
 		cr = append(cr, "ClusterRole/alameda-evictionerCR.yaml")
 		cr = append(cr, "ClusterRole/admission-controllerCR.yaml")
 		cr = append(cr, "ClusterRole/alameda-executorCR.yaml")
+		cr = append(cr, "ClusterRole/alameda-weavescopeCR.yaml")
 		secrets = append(secrets, "Secret/admission-controller-tls.yaml")
 		sa = append(sa, "ServiceAccount/alameda-evictionerSA.yaml")
 		sa = append(sa, "ServiceAccount/admission-controllerSA.yaml")
-		sa = append(sa, "ServiceAccount/alameda-executorSA.yaml")
+		sa = append(sa, "ServiceAccount/alameda-evictionerSA.yaml")
+		sa = append(sa, "ServiceAccount/alameda-weavescopeSA.yaml")
 		cm = append(cm, "ConfigMap/alameda-executor-config.yaml")
 		sv = append(sv, "Service/admission-controllerSV.yaml")
+		sv = append(sv, "Service/alameda-weavescopeSV.yaml")
 		dep = append(dep, "Deployment/admission-controllerDM.yaml")
 		dep = append(dep, "Deployment/alameda-evictionerDM.yaml")
 		dep = append(dep, "Deployment/alameda-executorDM.yaml")
+		dep = append(dep, "Deployment/alameda-weavescope-probeDM.yaml")
+		dep = append(dep, "Deployment/alameda-weavescopeDM.yaml")
+		ds = append(ds, "DaemonSet/alamdea-weavescopeDS.yaml")
+		psp = append(psp, "PodSecurityPolicy/alameda-weavescopePSP.yaml")
 	}
 	pvc = asp.getInstallPersistentVolumeClaimSource(pvc)
 	crd = asp.changeScalerCRDVersion(crd)
@@ -456,6 +492,8 @@ func (asp *AlamedaServiceParamter) GetInstallResource() *Resource {
 		SecretList:                   secrets,
 		PersistentVolumeClaimList:    pvc,
 		AlamdaScalerList:             alamdaScalerList,
+		DaemonSetList:                ds,
+		PodSecurityPolicyList:        psp,
 	}
 }
 
@@ -477,6 +515,7 @@ func NewAlamedaServiceParamter(instance *v1alpha1.AlamedaService) *AlamedaServic
 		AdmissionControllerSectionSet: instance.Spec.AdmissionControllerSectionSet,
 		AlamedaRecommenderSectionSet:  instance.Spec.AlamedaRecommenderSectionSet,
 		AlamedaExecutorSectionSet:     instance.Spec.AlamedaExecutorSectionSet,
+		AlamedaWeaveScopeSectionSet:   instance.Spec.AlamedaWeaveScopeSectionSet,
 		CurrentCRDVersion:             instance.Status.CRDVersion,
 		previousCRDVersion:            instance.Status.CRDVersion,
 	}

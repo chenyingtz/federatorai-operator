@@ -223,6 +223,14 @@ func (r *ReconcileAlamedaService) Reconcile(request reconcile.Request) (reconcil
 		log.V(-1).Info("sync deployment failed, retry reconciling AlamedaService", "AlamedaService.Namespace", instance.Namespace, "AlamedaService.Name", instance.Name, "msg", err.Error())
 		return reconcile.Result{Requeue: true, RequeueAfter: 1 * time.Second}, nil
 	}
+	if err := r.syncDaemonSet(instance, asp, installResource); err != nil {
+		log.V(-1).Info("sync daemonSet failed, retry reconciling AlamedaService", "AlamedaService.Namespace", instance.Namespace, "AlamedaService.Name", instance.Name, "msg", err.Error())
+		return reconcile.Result{Requeue: true, RequeueAfter: 1 * time.Second}, nil
+	}
+	if err := r.syncPodSecurityPolicy(instance, asp, installResource); err != nil {
+		log.V(-1).Info("sync podSecurityPolicy failed, retry reconciling AlamedaService", "AlamedaService.Namespace", instance.Namespace, "AlamedaService.Name", instance.Name, "msg", err.Error())
+		return reconcile.Result{Requeue: true, RequeueAfter: 1 * time.Second}, nil
+	}
 	// if EnableExecution Or EnableGUI has been changed to false
 	//Uninstall Execution Component
 	if !asp.EnableExecution {
@@ -568,6 +576,76 @@ func (r *ReconcileAlamedaService) syncDeployment(instance *federatoraiv1alpha1.A
 	return nil
 }
 
+func (r *ReconcileAlamedaService) syncDaemonSet(instance *federatoraiv1alpha1.AlamedaService, asp *alamedaserviceparamter.AlamedaServiceParamter, resource *alamedaserviceparamter.Resource) error {
+	for _, fileString := range resource.DaemonSetList {
+		resourceDS := componentConfig.NewDaemonSet(fileString)
+		if err := controllerutil.SetControllerReference(instance, resourceDS, r.scheme); err != nil {
+			return errors.Errorf("Fail resourceDaemonSet SetControllerReference: %s", err.Error())
+		}
+		//process resource DaemonSet into desire DaemonSet
+		resourceDS = processcrdspec.ParamterToDaemonSet(resourceDS, asp)
+		foundDS := &appsv1.Deployment{}
+		err := r.client.Get(context.TODO(), types.NamespacedName{Name: resourceDep.Name, Namespace: resourceDS.Namespace}, foundDS)
+		if err != nil && k8sErrors.IsNotFound(err) {
+			log.Info("Creating a new Resource DaemonSet ... ", "resourceDS.Name", resourceDS.Name)
+			err = r.client.Create(context.TODO(), resourceDS)
+			if err != nil {
+				return errors.Errorf("create DaemonSet  %s/%s failed: %s", resourceDS.Namespace, resourceDS.Name, err.Error())
+			}
+			log.Info("Successfully Creating Resource DaemonSet", "resourceDS.Name", resourceDS.Name)
+			continue
+		} else if err != nil {
+			return errors.Errorf("get DaemonSet %s/%s failed: %s", resourceDS.Namespace, resourceDS.Name, err.Error())
+		} else {
+			if updateresource.MisMatchResourceDaemonSet(foundDS, resourceDS) {
+				log.Info("Update Resource DaemonSet:", "resourceDS.Name", foundDS.Name)
+				err = r.client.Update(context.TODO(), foundDS)
+				if err != nil {
+					return errors.Errorf("update DaemonSet %s/%s failed: %s", foundDS.Namespace, foundDS.Name, err.Error())
+				}
+				log.Info("Successfully Update Resource DaemonSet", "resourceDS.Name", foundDS.Name)
+			}
+		}
+
+	}
+	return nil
+}
+
+func (r *ReconcileAlamedaService) syncPodSecurityPolicy(instance *federatoraiv1alpha1.AlamedaService, asp *alamedaserviceparamter.AlamedaServiceParamter, resource *alamedaserviceparamter.Resource) error {
+	for _, fileString := range resource.PodSecurityPolicyList {
+		resourcePSP := componentConfig.NewPodSecurityPolicy(fileString)
+		if err := controllerutil.SetControllerReference(instance, resourcePSP, r.scheme); err != nil {
+			return errors.Errorf("Fail PodSecurityPolicy SetControllerReference: %s", err.Error())
+		}
+		//process resource PodSecurityPolicy into desire PodSecurityPolicy
+		resourcePSP = processcrdspec.ParamterToPodSecurityPolicy(resourcePSP, asp)
+		foundPSP := &appsv1.Deployment{}
+		err := r.client.Get(context.TODO(), types.NamespacedName{Name: resourcePSP.Name, Namespace: resourcePSP.Namespace}, foundPSP)
+		if err != nil && k8sErrors.IsNotFound(err) {
+			log.Info("Creating a new Resource PodSecurityPolicy ... ", "resourcePSP.Name", resourcePSP.Name)
+			err = r.client.Create(context.TODO(), resourcePSP)
+			if err != nil {
+				return errors.Errorf("create PodSecurityPolicy %s/%s failed: %s", resourcePSP.Namespace, resourcePSP.Name, err.Error())
+			}
+			log.Info("Successfully Creating Resource PodSecurityPolicy", "resourcePSP.Name", resourcePSP.Name)
+			continue
+		} else if err != nil {
+			return errors.Errorf("get PodSecurityPolicy %s/%s failed: %s", resourcePSP.Namespace, resourcePSP.Name, err.Error())
+		} else {
+			if updateresource.MisMatchResourcePodSecurityPolicy(foundPSP, resourcePSP) {
+				log.Info("Update Resource PodSecurityPolicy:", "resourcePSP.Name", foundPSP.Name)
+				err = r.client.Update(context.TODO(), foundPSP)
+				if err != nil {
+					return errors.Errorf("update PodSecurityPolicy %s/%s failed: %s", foundPSP.Namespace, foundPSP.Name, err.Error())
+				}
+				log.Info("Successfully Update Resource PodSecurityPolicy", "resourcePSP.Name", foundPSP.Name)
+			}
+		}
+
+	}
+	return nil
+}
+
 func (r *ReconcileAlamedaService) uninstallDeployment(instance *federatoraiv1alpha1.AlamedaService, resource *alamedaserviceparamter.Resource) error {
 
 	for _, fileString := range resource.DeploymentList {
@@ -693,6 +771,36 @@ func (r *ReconcileAlamedaService) uninstallScalerforAlameda(instance *federatora
 	return nil
 }
 
+func (r *ReconcileAlamedaService) uninstallDaemonSet(instance *federatoraiv1alpha1.AlamedaService, resource *alamedaserviceparamter.Resource) error {
+
+	for _, fileString := range resource.DaemonSetList {
+		resourceDS := componentConfig.NewDaemonSet(fileString)
+		err := r.client.Delete(context.TODO(), resourceDS)
+		if err != nil && k8sErrors.IsNotFound(err) {
+			return nil
+		} else if err != nil {
+			return errors.Errorf("delete DaemonSet %s/%s failed: %s", resourceDS.Namespace, resourceDS.Name, err.Error())
+		}
+	}
+
+	return nil
+}
+
+func (r *ReconcileAlamedaService) uninstallPodSecurityPolicy(instance *federatoraiv1alpha1.AlamedaService, resource *alamedaserviceparamter.Resource) error {
+
+	for _, fileString := range resource.PodSecurityPolicyList {
+		resourcePSP := componentConfig.NewPodSecurityPolicy(fileString)
+		err := r.client.Delete(context.TODO(), resourcePSP)
+		if err != nil && k8sErrors.IsNotFound(err) {
+			return nil
+		} else if err != nil {
+			return errors.Errorf("delete PodSecurityPolicy %s/%s failed: %s", resourcePSP.Namespace, resourcePSP.Name, err.Error())
+		}
+	}
+
+	return nil
+}
+
 func (r *ReconcileAlamedaService) uninstallGUIComponent(instance *federatoraiv1alpha1.AlamedaService, resource *alamedaserviceparamter.Resource) error {
 
 	if err := r.uninstallDeployment(instance, resource); err != nil {
@@ -725,6 +833,14 @@ func (r *ReconcileAlamedaService) uninstallGUIComponent(instance *federatoraiv1a
 func (r *ReconcileAlamedaService) uninstallExecutionComponent(instance *federatoraiv1alpha1.AlamedaService, resource *alamedaserviceparamter.Resource) error {
 
 	if err := r.uninstallDeployment(instance, resource); err != nil {
+		return errors.Wrapf(err, "uninstall execution component failed")
+	}
+
+	if err := r.uninstallDaemonSet(instance, resource); err != nil {
+		return errors.Wrapf(err, "uninstall execution component failed")
+	}
+
+	if err := r.uninstallPodSecurityPolicy(instance, resource); err != nil {
 		return errors.Wrapf(err, "uninstall execution component failed")
 	}
 

@@ -42,6 +42,8 @@ pkg/assets/bindata.go: $(GOBINDATA_BIN)
 		Service/... \
 		Deployment/... \
 		AlamedaScaler/... \
+		DaemonSet/... \
+		PodSecurityPolicy/... \
 
 
 
