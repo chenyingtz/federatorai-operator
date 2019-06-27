@@ -80,6 +80,13 @@ func SectionSetParamterToDeployment(dep *appsv1.Deployment, asp *alamedaservicep
 			util.SetStorageToVolumeSource(dep, asp.GrafanaSectionSet.Storages, "my-alameda.grafana-type.pvc", util.GrafanaGroup)
 			util.SetStorageToMountPath(dep, asp.GrafanaSectionSet.Storages, util.GrafanaCTN, "grafana-type-storage", util.GrafanaGroup)
 		}
+	case util.AlamedaweavescopeDPN:
+		{
+			util.SetImageStruct(dep, asp.AlamedaWeavescopeSectionSet, "alameda-weave-scope-cluster-agent")
+			util.SetImagePullPolicy(dep, "alameda-weave-scope-cluster-agent", asp.AlamedaWeavescopeSectionSet.ImagePullPolicy)
+			util.SetImageStruct(dep, asp.AlamedaWeavescopeSectionSet, "alameda-weave-scope-app")
+			util.SetImagePullPolicy(dep, "alameda-weave-scope-app", asp.AlamedaWeavescopeSectionSet.ImagePullPolicy)
+		}
 	}
 }
 

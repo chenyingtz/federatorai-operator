@@ -25,6 +25,7 @@ const (
 	AdmissioncontrollerDPN = "admission-controller"
 	AlamedarecommenderDPN  = "alameda-recommender"
 	AlamedaexecutorDPN     = "alameda-executor"
+	AlamedaweavescopeDPN   = "alameda-weavescope"
 	GrafanaDPN             = "alameda-grafana"
 	InfluxdbDPN            = "alameda-influxdb"
 	//container name

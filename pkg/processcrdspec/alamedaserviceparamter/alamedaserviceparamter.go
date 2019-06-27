@@ -10,15 +10,18 @@ import (
 var (
 	crbList = []string{"ClusterRoleBinding/alameda-datahubCRB.yaml",
 		"ClusterRoleBinding/alameda-operatorCRB.yaml",
+		"ClusterRoleBinding/alameda-weavescopeCRB.yaml",
 	}
 	crList = []string{"ClusterRole/alameda-datahubCR.yaml",
 		"ClusterRole/alameda-operatorCR.yaml",
 		"ClusterRole/aggregate-alameda-admin-edit-alamedaCR.yaml",
+		"ClusterRole/alameda-weavescopeCR.yaml",
 	}
 
 	saList = []string{"ServiceAccount/alameda-datahubSA.yaml",
 		"ServiceAccount/alameda-operatorSA.yaml",
 		"ServiceAccount/alameda-aiSA.yaml",
+		"ServiceAccount/alameda-weavescopeSA.yaml",
 	}
 	crdList = []string{
 		"CustomResourceDefinition/alamedarecommendationsCRD.yaml",
@@ -29,14 +32,21 @@ var (
 
 	svList = []string{"Service/alameda-datahubSV.yaml",
 		"Service/alameda-influxdbSV.yaml",
-		"Service/alameda-ai-metricsSV.yaml"}
+		"Service/alameda-ai-metricsSV.yaml",
+		"Service/alameda-weavescopeSV.yaml",
+	}
 
 	depList = []string{"Deployment/alameda-datahubDM.yaml",
 		"Deployment/alameda-operatorDM.yaml",
 		"Deployment/alameda-influxdbDM.yaml",
 		"Deployment/alameda-aiDM.yaml",
 		"Deployment/alameda-recommenderDM.yaml",
+		"Deployment/alameda-weavescope-probeDM.yaml",
+		"Deployment/alameda-weavescopeDM.yaml",
 	}
+
+	//"DaemonSet/alamdea-weavescopeDS.yaml",
+	//"PodSecurityPolicy/alameda-weavescopePSP.yaml",
 
 	guiList = []string{
 		"ClusterRoleBinding/alameda-grafanaCRB.yaml",
@@ -100,6 +110,7 @@ type AlamedaServiceParamter struct {
 	AdmissionControllerSectionSet v1alpha1.AlamedaComponentSpec
 	AlamedaRecommenderSectionSet  v1alpha1.AlamedaComponentSpec
 	AlamedaExecutorSectionSet     v1alpha1.AlamedaComponentSpec
+	AlamedaWeavescopeSectionSet   v1alpha1.AlamedaComponentSpec
 	CurrentCRDVersion             v1alpha1.AlamedaServiceStatusCRDVersion
 	previousCRDVersion            v1alpha1.AlamedaServiceStatusCRDVersion
 }
@@ -477,6 +488,7 @@ func NewAlamedaServiceParamter(instance *v1alpha1.AlamedaService) *AlamedaServic
 		AdmissionControllerSectionSet: instance.Spec.AdmissionControllerSectionSet,
 		AlamedaRecommenderSectionSet:  instance.Spec.AlamedaRecommenderSectionSet,
 		AlamedaExecutorSectionSet:     instance.Spec.AlamedaExecutorSectionSet,
+		AlamedaWeavescopeSectionSet:   instance.Spec.AlamedaWeavescopeSectionSet,
 		CurrentCRDVersion:             instance.Status.CRDVersion,
 		previousCRDVersion:            instance.Status.CRDVersion,
 	}
