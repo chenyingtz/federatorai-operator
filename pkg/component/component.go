@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	v1beta1 "k8s.io/api/extensions/v1beta1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/client-go/util/cert"
@@ -56,6 +57,15 @@ func (c ComponentConfig) NewClusterRole(str string) *rbacv1.ClusterRole {
 		log.Error(err, "Failed to Test create clusterrole")
 	}
 	cr := resourceread.ReadClusterRoleV1(crByte)
+	cr.Name = strings.Replace(cr.Name, strings.Split(cr.Name, "-")[0], c.NameSpace, -1)
+	return cr
+}
+func (c ComponentConfig) NewPodSecurityPolicy(str string) *v1beta1.PodSecurityPolicy {
+	crByte, err := assets.Asset(str)
+	if err != nil {
+		log.Error(err, "Failed to Test create PodSecurityPolicy")
+	}
+	cr := resourceread.ReadPodSecurityPolicyV1beta1(crByte)
 	cr.Name = strings.Replace(cr.Name, strings.Split(cr.Name, "-")[0], c.NameSpace, -1)
 	return cr
 }
