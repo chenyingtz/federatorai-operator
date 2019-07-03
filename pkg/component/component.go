@@ -69,6 +69,17 @@ func (c ComponentConfig) NewPodSecurityPolicy(str string) *v1beta1.PodSecurityPo
 	cr.Name = strings.Replace(cr.Name, strings.Split(cr.Name, "-")[0], c.NameSpace, -1)
 	return cr
 }
+func (c ComponentConfig) NewDaemonSet(str string) *appsv1.DaemonSet {
+	daemonSetBytes, err := assets.Asset(str)
+	if err != nil {
+		log.Error(err, "Failed to Test create DaemonSet")
+
+	}
+	d := resourceread.ReadDaemonSetV1(daemonSetBytes)
+	d.Namespace = c.NameSpace
+	d.Spec.Template = c.mutatePodTemplateSpecWithConfig(d.Spec.Template)
+	return d
+}
 func (c ComponentConfig) NewServiceAccount(str string) *corev1.ServiceAccount {
 	saByte, err := assets.Asset(str)
 	if err != nil {

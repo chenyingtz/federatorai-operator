@@ -27,3 +27,12 @@ func ReadDeploymentV1(objBytes []byte) *appsv1.Deployment {
 	}
 	return requiredObj.(*appsv1.Deployment)
 }
+
+func ReadDaemonSetV1(objBytes []byte) *appsv1.DaemonSet {
+	requiredObj, err := runtime.Decode(appsCodecs.UniversalDecoder(appsv1.SchemeGroupVersion), objBytes)
+	if err != nil {
+		log.Error(err, "Fail to ReadDaemonSetV1OrDie")
+
+	}
+	return requiredObj.(*appsv1.DaemonSet)
+}

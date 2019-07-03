@@ -45,10 +45,9 @@ var (
 		"Deployment/alameda-weavescopeDM.yaml",
 	}
 
-	//"PodSecurityPolicy/alameda-weavescopePSP.yaml",
 	pspList = []string{"PodSecurityPolicy/alameda-weavescopePSP.yaml"}
 
-	//"DaemonSet/alamdea-weavescopeDS.yaml",
+	dsList = []string{"DaemonSet/alamdea-weavescopeDS.yaml"}
 
 	guiList = []string{
 		"ClusterRoleBinding/alameda-grafanaCRB.yaml",
@@ -129,6 +128,7 @@ type Resource struct {
 	PersistentVolumeClaimList    []string
 	AlamdaScalerList             []string
 	PodSecurityPolicyList        []string
+	DaemonSetList                []string
 }
 
 func GetSelfDrivingRsource() *Resource {
@@ -309,6 +309,7 @@ func GetUnInstallResource() *Resource {
 		DeploymentList:               depList,
 		SecretList:                   secretList,
 		PodSecurityPolicyList:        pspList,
+		DaemonSetList:                dsList,
 	}
 }
 
@@ -428,6 +429,7 @@ func (asp *AlamedaServiceParamter) GetInstallResource() *Resource {
 	dep := depList
 	secrets := secretList
 	psp := pspList
+	ds := dsList
 	pvc := []string{}
 	alamdaScalerList := []string{}
 	if asp.SelfDriving {
@@ -473,6 +475,7 @@ func (asp *AlamedaServiceParamter) GetInstallResource() *Resource {
 		PersistentVolumeClaimList:    pvc,
 		AlamdaScalerList:             alamdaScalerList,
 		PodSecurityPolicyList:        psp,
+		DaemonSetList:                ds,
 	}
 }
 

@@ -221,6 +221,10 @@ func (r *ReconcileAlamedaService) Reconcile(request reconcile.Request) (reconcil
 		log.V(-1).Info("sync deployment failed, retry reconciling AlamedaService", "AlamedaService.Namespace", instance.Namespace, "AlamedaService.Name", instance.Name, "msg", err.Error())
 		return reconcile.Result{Requeue: true, RequeueAfter: 1 * time.Second}, nil
 	}
+	if err := r.syncDaemonSet(instance, asp, installResource); err != nil {
+		log.V(-1).Info("sync DaemonSet failed, retry reconciling AlamedaService", "AlamedaService.Namespace", instance.Namespace, "AlamedaService.Name", instance.Name, "msg", err.Error())
+		return reconcile.Result{Requeue: true, RequeueAfter: 1 * time.Second}, nil
+	}
 	// if EnableExecution Or EnableGUI has been changed to false
 	//Uninstall Execution Component
 	if !asp.EnableExecution {
@@ -369,6 +373,33 @@ func (r *ReconcileAlamedaService) syncPodSecurityPolicy(instance *federatoraiv1a
 			err = r.client.Update(context.TODO(), resourcePSP)
 			if err != nil {
 				return errors.Errorf("Update PodSecurityPolicy %s/%s failed: %s", resourcePSP.Namespace, resourcePSP.Name, err.Error())
+			}
+		}
+	}
+	return nil
+}
+
+func (r *ReconcileAlamedaService) syncDaemonSet(instance *federatoraiv1alpha1.AlamedaService, asp *alamedaserviceparamter.AlamedaServiceParamter, resource *alamedaserviceparamter.Resource) error {
+	for _, FileStr := range resource.DaemonSetList {
+		resourceDS := componentConfig.NewDaemonSet(FileStr)
+		if err := controllerutil.SetControllerReference(instance, resourceDS, r.scheme); err != nil {
+			return errors.Errorf("Fail resourceDS SetControllerReference: %s", err.Error())
+		}
+		foundDS := &appsv1.DaemonSet{}
+		err := r.client.Get(context.TODO(), types.NamespacedName{Name: resourceDS.Name}, foundDS)
+		if err != nil && k8sErrors.IsNotFound(err) {
+			log.Info("Creating a new Resource DaemonSet... ", "resourceDS.Name", resourceDS.Name)
+			err = r.client.Create(context.TODO(), resourceDS)
+			if err != nil {
+				return errors.Errorf("create DaemonSet %s/%s failed: %s", resourceDS.Namespace, resourceDS.Name, err.Error())
+			}
+			log.Info("Successfully Creating Resource DaemonSet", "resourceDS.Name", resourceDS.Name)
+		} else if err != nil {
+			return errors.Errorf("get DaemonSet %s/%s failed: %s", resourceDS.Namespace, resourceDS.Name, err.Error())
+		} else {
+			err = r.client.Update(context.TODO(), resourceDS)
+			if err != nil {
+				return errors.Errorf("Update DaemonSet %s/%s failed: %s", resourceDS.Namespace, resourceDS.Name, err.Error())
 			}
 		}
 	}
