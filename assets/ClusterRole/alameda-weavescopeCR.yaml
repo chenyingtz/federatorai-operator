@@ -73,7 +73,7 @@ rules:
 - apiGroups:
   - extensions
   resourceNames:
-  - alameda-weave-scope
+  - federatorai-alameda-weave-scope
   resources:
   - podsecuritypolicies
   verbs:
