@@ -23,7 +23,7 @@ spec:
         alameda-weave-scope-component: agent
     spec:
       containers:
-        - name: scope-agent
+        - name: alameda-weave-scope-agent
           args:
             - '--mode=probe'
             - '--probe-only'

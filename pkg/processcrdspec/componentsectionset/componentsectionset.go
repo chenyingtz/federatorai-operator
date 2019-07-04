@@ -82,10 +82,13 @@ func SectionSetParamterToDeployment(dep *appsv1.Deployment, asp *alamedaservicep
 		}
 	case util.AlamedaweavescopeDPN:
 		{
-			util.SetImageStruct(dep, asp.AlamedaWeavescopeSectionSet, "alameda-weave-scope-cluster-agent")
-			util.SetImagePullPolicy(dep, "alameda-weave-scope-cluster-agent", asp.AlamedaWeavescopeSectionSet.ImagePullPolicy)
-			util.SetImageStruct(dep, asp.AlamedaWeavescopeSectionSet, "alameda-weave-scope-app")
-			util.SetImagePullPolicy(dep, "alameda-weave-scope-app", asp.AlamedaWeavescopeSectionSet.ImagePullPolicy)
+			util.SetImageStruct(dep, asp.AlamedaWeavescopeSectionSet, util.AlamedaweavescopeCTN)
+			util.SetImagePullPolicy(dep, util.AlamedaweavescopeCTN, asp.AlamedaWeavescopeSectionSet.ImagePullPolicy)
+		}
+	case util.AlamedaweavescopeProbeDPN:
+		{
+			util.SetImageStruct(dep, asp.AlamedaWeavescopeSectionSet, util.AlamedaweavescopeProbeCTN)
+			util.SetImagePullPolicy(dep, util.AlamedaweavescopeProbeCTN, asp.AlamedaWeavescopeSectionSet.ImagePullPolicy)
 		}
 	}
 }
