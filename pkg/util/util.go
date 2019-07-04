@@ -120,6 +120,35 @@ func setImageVersion(dep *appsv1.Deployment, ctn string, version string) {
 	}
 }
 
+func setDaemonSetImage(ds *appsv1.DaemonSet, ctn string, image string) {
+	for index, value := range ds.Spec.Template.Spec.Containers {
+		if value.Name == ctn {
+			newImage := ""
+			oriImage := ds.Spec.Template.Spec.Containers[index].Image
+			imageStrutct := strings.Split(oriImage, ":")
+			if len(imageStrutct) != 0 {
+				newImage = fmt.Sprintf("%s:%s", image, imageStrutct[len(imageStrutct)-1])
+				ds.Spec.Template.Spec.Containers[index].Image = newImage
+			}
+		}
+	}
+}
+
+func setDaemonSetImageVersion(ds *appsv1.DaemonSet, ctn string, version string) {
+	for index, value := range ds.Spec.Template.Spec.Containers {
+		if value.Name == ctn {
+			newImage := ""
+			oriImage := ds.Spec.Template.Spec.Containers[index].Image
+			imageStrutct := strings.Split(oriImage, ":")
+			if len(imageStrutct) != 0 {
+				newImage = fmt.Sprintf("%s:%s", strings.Join(imageStrutct[:len(imageStrutct)-1], ":"), version)
+				ds.Spec.Template.Spec.Containers[index].Image = newImage
+			}
+			log.V(1).Info("SetDaemonSetImageVersion", ds.Spec.Template.Spec.Containers[index].Name, newImage)
+		}
+	}
+}
+
 //if user set related image struct then AlamedaService set Containers image structure
 func SetImageStruct(dep *appsv1.Deployment, value interface{}, ctn string) {
 	switch v := value.(type) {
@@ -150,6 +179,38 @@ func SetImagePullPolicy(dep *appsv1.Deployment, ctn string, imagePullPolicy core
 		if value.Name == ctn {
 			dep.Spec.Template.Spec.Containers[index].ImagePullPolicy = imagePullPolicy
 			log.V(1).Info("SetImagePullPolicy", dep.Spec.Template.Spec.Containers[index].Name, imagePullPolicy)
+		}
+	}
+}
+
+func SetDaemonSetImageStruct(ds *appsv1.DaemonSet, value interface{}, ctn string) {
+	switch v := value.(type) {
+	case string:
+		{
+			//set global schema image version
+			if v != "" {
+				setDaemonSetImageVersion(ds, ctn, v)
+			}
+		}
+	case v1alpha1.AlamedaComponentSpec:
+		{
+			//set section schema image
+			if v.Image != "" {
+				setDaemonSetImage(ds, ctn, v.Image)
+			}
+			//set section schema image version
+			if v.Version != "" {
+				setDaemonSetImageVersion(ds, ctn, v.Version)
+			}
+		}
+	}
+}
+
+func SetDaemonSetImagePullPolicy(ds *appsv1.DaemonSet, ctn string, imagePullPolicy corev1.PullPolicy) {
+	for index, value := range ds.Spec.Template.Spec.Containers {
+		if value.Name == ctn {
+			ds.Spec.Template.Spec.Containers[index].ImagePullPolicy = imagePullPolicy
+			log.V(1).Info("SetDaemonSetImagePullPolicy", ds.Spec.Template.Spec.Containers[index].Name, imagePullPolicy)
 		}
 	}
 }

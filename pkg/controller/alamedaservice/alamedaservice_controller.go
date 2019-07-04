@@ -385,6 +385,8 @@ func (r *ReconcileAlamedaService) syncDaemonSet(instance *federatoraiv1alpha1.Al
 		if err := controllerutil.SetControllerReference(instance, resourceDS, r.scheme); err != nil {
 			return errors.Errorf("Fail resourceDS SetControllerReference: %s", err.Error())
 		}
+		//process resource DaemonSet according to AlamedaService CR
+		resourceDS = processcrdspec.ParamterToDaemonSet(resourceDS, asp)
 		foundDS := &appsv1.DaemonSet{}
 		err := r.client.Get(context.TODO(), types.NamespacedName{Name: resourceDS.Name, Namespace: resourceDS.Namespace}, foundDS)
 		if err != nil && k8sErrors.IsNotFound(err) {
@@ -397,11 +399,18 @@ func (r *ReconcileAlamedaService) syncDaemonSet(instance *federatoraiv1alpha1.Al
 		} else if err != nil {
 			return errors.Errorf("get DaemonSet %s/%s failed: %s", resourceDS.Namespace, resourceDS.Name, err.Error())
 		} else {
-			err = r.client.Update(context.TODO(), resourceDS)
-			if err != nil {
-				return errors.Errorf("Update DaemonSet %s/%s failed: %s", resourceDS.Namespace, resourceDS.Name, err.Error())
+			if updateresource.MisMatchResourceDaemonSet(foundDS, resourceDS) {
+				log.Info("Update Resource DaemonSet:", "foundDS.Name", foundDS.Name)
+				err = r.client.Delete(context.TODO(), foundDS)
+				if err != nil {
+					return errors.Errorf("delete DaemonSet %s/%s failed: %s", foundDS.Namespace, foundDS.Name, err.Error())
+				}
+				err = r.client.Create(context.TODO(), resourceDS)
+				if err != nil {
+					return errors.Errorf("create DaemonSet %s/%s failed: %s", foundDS.Namespace, foundDS.Name, err.Error())
+				}
+				log.Info("Successfully Update Resource DaemonSet", "resourceDS.Namespace", resourceDS.Namespace, "resourceDS.Name", resourceDS.Name, "Image", resourceDS.Spec.Template.Spec.Containers[0].Image)
 			}
-			log.Info("Successfully Update Resource DaemonSet", "resourceDS.Namespace", resourceDS.Namespace, "resourceDS.Name", resourceDS.Name)
 		}
 	}
 	return nil

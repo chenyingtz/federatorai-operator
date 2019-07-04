@@ -93,6 +93,16 @@ func SectionSetParamterToDeployment(dep *appsv1.Deployment, asp *alamedaservicep
 	}
 }
 
+func SectionSetParamterToDaemonSet(ds *appsv1.DaemonSet, asp *alamedaserviceparamter.AlamedaServiceParamter) {
+	switch ds.Name {
+	case util.AlamedaweavescopeAgentDS:
+		{
+			util.SetDaemonSetImageStruct(ds, asp.AlamedaWeavescopeSectionSet, util.AlamedaweavescopeAgentCTN)
+			util.SetDaemonSetImagePullPolicy(ds, util.AlamedaweavescopeAgentCTN, asp.AlamedaWeavescopeSectionSet.ImagePullPolicy)
+		}
+	}
+}
+
 func SectionSetParamterToPersistentVolumeClaim(pvc *corev1.PersistentVolumeClaim, asp *alamedaserviceparamter.AlamedaServiceParamter) {
 	for _, pvcusage := range v1alpha1.PvcUsage {
 		switch pvc.Name {
