@@ -158,6 +158,9 @@ spec:
 - Field: alameda-executor
   - type: [AlamedaComponentSpec](#alamedacomponentspec)
   - description: Spec for Alameda-executor component. This field is optional.
+- Field: alameda-weavescope
+  - type: [AlamedaComponentSpec](#alamedacomponentspec)
+  - description: Spec for Alameda-weavescope component. This field is optional.
 
 ### StorageSpec
 

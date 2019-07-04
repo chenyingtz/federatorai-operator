@@ -10,15 +10,18 @@ import (
 var (
 	crbList = []string{"ClusterRoleBinding/alameda-datahubCRB.yaml",
 		"ClusterRoleBinding/alameda-operatorCRB.yaml",
+		"ClusterRoleBinding/alameda-weavescopeCRB.yaml",
 	}
 	crList = []string{"ClusterRole/alameda-datahubCR.yaml",
 		"ClusterRole/alameda-operatorCR.yaml",
 		"ClusterRole/aggregate-alameda-admin-edit-alamedaCR.yaml",
+		"ClusterRole/alameda-weavescopeCR.yaml",
 	}
 
 	saList = []string{"ServiceAccount/alameda-datahubSA.yaml",
 		"ServiceAccount/alameda-operatorSA.yaml",
 		"ServiceAccount/alameda-aiSA.yaml",
+		"ServiceAccount/alameda-weavescopeSA.yaml",
 	}
 	crdList = []string{
 		"CustomResourceDefinition/alamedarecommendationsCRD.yaml",
@@ -29,14 +32,22 @@ var (
 
 	svList = []string{"Service/alameda-datahubSV.yaml",
 		"Service/alameda-influxdbSV.yaml",
-		"Service/alameda-ai-metricsSV.yaml"}
+		"Service/alameda-ai-metricsSV.yaml",
+		"Service/alameda-weavescopeSV.yaml",
+	}
 
 	depList = []string{"Deployment/alameda-datahubDM.yaml",
 		"Deployment/alameda-operatorDM.yaml",
 		"Deployment/alameda-influxdbDM.yaml",
 		"Deployment/alameda-aiDM.yaml",
 		"Deployment/alameda-recommenderDM.yaml",
+		"Deployment/alameda-weavescope-probeDM.yaml",
+		"Deployment/alameda-weavescopeDM.yaml",
 	}
+
+	pspList = []string{"PodSecurityPolicy/alameda-weavescopePSP.yaml"}
+
+	dsList = []string{"DaemonSet/alamdea-weavescopeDS.yaml"}
 
 	guiList = []string{
 		"ClusterRoleBinding/alameda-grafanaCRB.yaml",
@@ -100,6 +111,7 @@ type AlamedaServiceParamter struct {
 	AdmissionControllerSectionSet v1alpha1.AlamedaComponentSpec
 	AlamedaRecommenderSectionSet  v1alpha1.AlamedaComponentSpec
 	AlamedaExecutorSectionSet     v1alpha1.AlamedaComponentSpec
+	AlamedaWeavescopeSectionSet   v1alpha1.AlamedaComponentSpec
 	CurrentCRDVersion             v1alpha1.AlamedaServiceStatusCRDVersion
 	previousCRDVersion            v1alpha1.AlamedaServiceStatusCRDVersion
 }
@@ -115,6 +127,8 @@ type Resource struct {
 	SecretList                   []string
 	PersistentVolumeClaimList    []string
 	AlamdaScalerList             []string
+	PodSecurityPolicyList        []string
+	DaemonSetList                []string
 }
 
 func GetSelfDrivingRsource() *Resource {
@@ -294,6 +308,8 @@ func GetUnInstallResource() *Resource {
 		ServiceList:                  svList,
 		DeploymentList:               depList,
 		SecretList:                   secretList,
+		PodSecurityPolicyList:        pspList,
+		DaemonSetList:                dsList,
 	}
 }
 
@@ -412,6 +428,8 @@ func (asp *AlamedaServiceParamter) GetInstallResource() *Resource {
 	sv := svList
 	dep := depList
 	secrets := secretList
+	psp := pspList
+	ds := dsList
 	pvc := []string{}
 	alamdaScalerList := []string{}
 	if asp.SelfDriving {
@@ -456,6 +474,8 @@ func (asp *AlamedaServiceParamter) GetInstallResource() *Resource {
 		SecretList:                   secrets,
 		PersistentVolumeClaimList:    pvc,
 		AlamdaScalerList:             alamdaScalerList,
+		PodSecurityPolicyList:        psp,
+		DaemonSetList:                ds,
 	}
 }
 
@@ -477,6 +497,7 @@ func NewAlamedaServiceParamter(instance *v1alpha1.AlamedaService) *AlamedaServic
 		AdmissionControllerSectionSet: instance.Spec.AdmissionControllerSectionSet,
 		AlamedaRecommenderSectionSet:  instance.Spec.AlamedaRecommenderSectionSet,
 		AlamedaExecutorSectionSet:     instance.Spec.AlamedaExecutorSectionSet,
+		AlamedaWeavescopeSectionSet:   instance.Spec.AlamedaWeavescopeSectionSet,
 		CurrentCRDVersion:             instance.Status.CRDVersion,
 		previousCRDVersion:            instance.Status.CRDVersion,
 	}
