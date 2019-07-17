@@ -184,7 +184,6 @@ rules:
   - extensions
   - apps
   resources:
-  - daemonsets
   - deployments
   - deployments/scale
   verbs:
@@ -214,14 +213,6 @@ rules:
   verbs:
   - "*"
 - apiGroups:
-  - extensions
-  resourceNames:
-  - federatorai-alameda-weave-scope
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
-- apiGroups:
   - volumesnapshot.external-storage.k8s.io
   resources:
   - volumesnapshots
@@ -229,3 +220,10 @@ rules:
   verbs:
   - list
   - watch
+- apiGroups:
+  - extensions
+  - apps
+  resources:
+  - daemonsets
+  verbs:
+  - "*"

@@ -90,14 +90,6 @@ rules:
   verbs:
   - "*"
 - apiGroups:
-  - extensions
-  resourceNames:
-  - federatorai-alameda-weave-scope
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
-- apiGroups:
   - volumesnapshot.external-storage.k8s.io
   resources:
   - volumesnapshots
